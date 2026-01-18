@@ -23,11 +23,6 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(""),
 
-  // VLayer Configuration (optional)
-  VLAYER_WEB_PROOF_API: z.string().url("VLAYER_WEB_PROOF_API must be a valid URL").optional().default("https://web-prover.vlayer.xyz/api/v0/prove"),
-  VLAYER_CLIENT_ID: z.string().optional().default(""),
-  VLAYER_BEARER_TOKEN: z.string().optional().default(""),
-
   // Database (postgres)
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 

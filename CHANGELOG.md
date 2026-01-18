@@ -1,39 +1,39 @@
-# @mcpay/mcp
+# @cronos402/mcp
 
 ## 0.0.6
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.17
+  - cronos402@0.1.17
 
 ## 0.0.6-beta.0
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.17-beta.0
+  - cronos402@0.1.17-beta.0
 
 ## 0.0.5
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.16
+  - cronos402@0.1.16
 
 ## 0.0.4
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.15
+  - cronos402@0.1.15
 
 ## 0.0.3
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.14
+  - cronos402@0.1.14
 
 ## 0.0.2
 
@@ -41,11 +41,11 @@
 
 - Updated dependencies
 - Updated dependencies
-  - mcpay@0.1.13
+  - cronos402@0.1.13
 
 ## 0.0.2-beta.0
 
 ### Patch Changes
 
 - Updated dependencies
-  - mcpay@0.1.13-beta.0
+  - cronos402@0.1.13-beta.0

@@ -1,6 +1,6 @@
 # Proxy Hooks
 
-This directory contains hooks that can be used with the MCPay proxy system to modify requests and responses.
+This directory contains hooks that can be used with the Cronos402 proxy system to modify requests and responses.
 
 ## Available Hooks
 
@@ -38,72 +38,9 @@ const hooks = [
 ];
 ```
 
-### VLayerHook
-Generates cryptographic web proofs for requests using the VLayer service.
-
-**Features:**
-- Generates web proofs for all proxied requests
-- Extracts and parses proof data with validation
-- Domain filtering (include/exclude lists)
-- Retry logic with exponential backoff
-- Request body size limits and timeout protection
-- Detailed proof information in responses
-- Configurable logging and response attachment
-
-**Usage:**
-```typescript
-import { VLayerHook } from "./hooks/vlayer-hook.js";
-
-const hooks = [
-  new VLayerHook({
-    enabled: true,                    // Enable/disable web proof generation
-    logProofs: true,                  // Log proof data to console
-    attachToResponse: false,          // Attach proof info to response content
-    validateProofs: true,             // Validate generated proofs
-    includeRequestDetails: true,       // Include request details in response
-    includeResponseDetails: true,      // Include response details in response
-    maxProofSize: 1024 * 1024,        // Max request body size (1MB)
-    timeoutMs: 10000,                 // Proof generation timeout (10s)
-    retryAttempts: 2,                 // Number of retry attempts
-    excludeDomains: ['localhost'],     // Domains to exclude
-    includeDomains: ['api.example.com'], // Domains to include (if specified)
-    headers: [                        // Headers for web proof requests
-      'x-client-id: mcpay-tech-dev',
-      'Authorization: Bearer token...',
-    ],
-    vlayerConfig: {                   // VLayer service configuration
-      apiEndpoint: 'https://web-prover.vlayer.xyz/api/v0/prove',
-      clientId: 'mcpay-tech-dev',
-      bearerToken: 'your-bearer-token',
-    },
-  }),
-];
-```
-
-**Configuration Options:**
-- `enabled`: Whether to generate web proofs (default: true)
-- `logProofs`: Whether to log proof data to console (default: false)
-- `attachToResponse`: Whether to attach proof info to response content (default: true)
-- `validateProofs`: Whether to validate generated proofs (default: true)
-- `includeRequestDetails`: Include request details in response (default: true)
-- `includeResponseDetails`: Include response details in response (default: true)
-- `maxProofSize`: Maximum request body size in bytes (default: 1MB)
-- `timeoutMs`: Proof generation timeout in milliseconds (default: 10s)
-- `retryAttempts`: Number of retry attempts on failure (default: 2)
-- `excludeDomains`: Array of domain patterns to exclude (default: [])
-- `includeDomains`: Array of domain patterns to include (default: [])
-- `headers`: Array of headers to include in web proof requests (default: [])
-- `vlayerConfig`: VLayer service configuration object (required)
-
-**Domain Filtering:**
-- If `excludeDomains` is specified, matching domains are skipped
-- If `includeDomains` is specified, only matching domains are processed
-- Domain matching uses `includes()` for partial matching
-- Invalid URLs are automatically excluded
-
 ## Hook Interface
 
-All hooks implement the `Hook` interface from `mcpay/handler`:
+All hooks implement the `Hook` interface from `cronos402/handler`:
 
 ```typescript
 interface Hook {
@@ -151,7 +88,6 @@ The current order in the main application is:
 2. `LoggingHook` - Logs request/response details
 3. `X402WalletHook` - Handles payment requirements
 4. `SecurityHook` - Removes sensitive headers
-5. `VLayerHook` - Generates web proofs
 
 ## Best Practices
 

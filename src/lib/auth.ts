@@ -49,7 +49,7 @@ const crossDomainConfig = () => {
   return {
     crossSubDomainCookies: {
       enabled: true,
-      domain: ".cronos402.tech"
+      domain: ".cronos402.dev"
     },
   }
 }
