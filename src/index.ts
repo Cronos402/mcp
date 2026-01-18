@@ -239,6 +239,86 @@ app.post("/api/wallets/link", async (c) => {
     }
 });
 
+// Delete wallet - handle preflight
+app.options("/api/wallets/:walletId", (c) => {
+    return c.body(null, 204);
+});
+
+// Delete/unlink wallet
+app.delete("/api/wallets/:walletId", async (c) => {
+    console.log('[WALLET DELETE] Request received');
+    try {
+        const session = await auth.api.getSession({ headers: c.req.raw.headers });
+        if (!session) {
+            console.log('[WALLET DELETE] Unauthorized - no session');
+            return c.json({ error: "Unauthorized" }, 401);
+        }
+
+        const walletId = c.req.param("walletId");
+        if (!walletId) {
+            return c.json({ error: "Wallet ID is required" }, 400);
+        }
+
+        // Find the wallet and verify ownership
+        const wallet = await db.query.userWallets.findFirst({
+            where: (t, { and, eq }) => and(
+                eq(t.id, walletId),
+                eq(t.userId, session.user.id)
+            ),
+        });
+
+        if (!wallet) {
+            return c.json({ error: "Wallet not found or you don't have permission to delete it" }, 404);
+        }
+
+        // Don't allow deleting the primary wallet if it's the only one
+        if (wallet.isPrimary) {
+            const userWalletCount = await db.query.userWallets.findMany({
+                where: (t, { and, eq }) => and(
+                    eq(t.userId, session.user.id),
+                    eq(t.isActive, true)
+                ),
+            });
+
+            if (userWalletCount.length === 1) {
+                return c.json({ error: "Cannot delete your only wallet. Add another wallet first." }, 400);
+            }
+        }
+
+        // Delete the wallet
+        const { userWallets: walletsTable } = await import("../auth-schema.js");
+        const { eq } = await import("drizzle-orm");
+        await db.delete(walletsTable).where(eq(walletsTable.id, walletId));
+
+        // If we deleted the primary wallet, set another wallet as primary
+        if (wallet.isPrimary) {
+            const nextWallet = await db.query.userWallets.findFirst({
+                where: (t, { and, eq: eqOp }) => and(
+                    eqOp(t.userId, session.user.id),
+                    eqOp(t.isActive, true)
+                ),
+                orderBy: (t, { desc }) => [desc(t.createdAt)],
+            });
+
+            if (nextWallet) {
+                await db.update(walletsTable)
+                    .set({ isPrimary: true, updatedAt: new Date() })
+                    .where(eq(walletsTable.id, nextWallet.id));
+            }
+        }
+
+        console.log(`[WALLET DELETE] User ${session.user.id} deleted wallet ${walletId}`);
+
+        return c.json({
+            success: true,
+            message: "Wallet removed successfully"
+        });
+    } catch (error) {
+        console.error("[WALLET DELETE ERROR]", error);
+        return c.json({ error: (error as Error).message }, 400);
+    }
+});
+
 // Balances - handle preflight
 app.options("/api/balance", (c) => {
     return c.body(null, 204);
