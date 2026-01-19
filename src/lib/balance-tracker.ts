@@ -170,9 +170,23 @@ export async function getUSDCBalance(address: Address, network: CronosNetwork): 
 export type AnyBalance = BalanceResult | TokenBalanceResult;
 
 export async function getBalancesSummary(address: Address, network: CronosNetwork) {
-  const [native, usdc] = await Promise.all([
+  // Use Promise.allSettled to prevent single failure from crashing everything
+  const results = await Promise.allSettled([
     getNativeBalance(address, network),
     getUSDCBalance(address, network),
   ]);
+
+  // Extract results, returning null for failed requests
+  const native = results[0].status === 'fulfilled' ? results[0].value : null;
+  const usdc = results[1].status === 'fulfilled' ? results[1].value : null;
+
+  // Log errors for debugging but don't crash
+  if (results[0].status === 'rejected') {
+    console.error('[BalanceTracker] Failed to get native balance:', results[0].reason);
+  }
+  if (results[1].status === 'rejected') {
+    console.error('[BalanceTracker] Failed to get USDC balance:', results[1].reason);
+  }
+
   return { native, usdc } as const;
 }

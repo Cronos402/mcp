@@ -35,6 +35,12 @@ const ALLOWED_ORIGINS = new Set([
 
 const app = new Hono();
 
+// Global error handler - prevents server crashes
+app.onError((err, c) => {
+    console.error('[MCP] Unhandled error:', err);
+    return c.json({ error: err.message || 'Internal server error' }, 500);
+});
+
 app.use("*", cors({
     allowHeaders: [
         "Origin",
@@ -865,7 +871,22 @@ app.all("/mcp", async (c) => {
 const port = 3005;
 console.log(`[MCP] Server starting on port http://localhost:${port}`);
 
-serve({
-    fetch: app.fetch,
-    port: port
+try {
+    serve({
+        fetch: app.fetch,
+        port: port
+    });
+} catch (error) {
+    console.error('[MCP] Failed to start server:', error);
+    process.exit(1);
+}
+
+// Process error handlers - log but don't crash on rejections
+process.on('unhandledRejection', (reason) => {
+    console.error('[MCP] Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('[MCP] Uncaught Exception:', error);
+    process.exit(1);
 });
