@@ -5,6 +5,8 @@ import {
   boolean,
   integer,
   jsonb,
+  pgEnum,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -156,3 +158,91 @@ export const userWallets = pgTable("user_wallets", {
     .notNull(),
   lastUsedAt: timestamp("last_used_at"),
 });
+
+// ============================================================================
+// CHAT TABLES - AI conversation management with MCP servers
+// ============================================================================
+
+// Chat visibility enum
+export const chatVisibility = pgEnum("chat_visibility", ["public", "private"]);
+export const messageRole = pgEnum("message_role", ["user", "assistant", "system"]);
+
+// Chats table - server-specific conversations
+export const chats = pgTable(
+  "chats",
+  {
+    id: text("id").primaryKey(), // Client-generated UUID
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+
+    // Ownership & server association
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    mcpServerId: text("mcp_server_id").notNull(), // From indexer
+
+    // Chat metadata
+    title: text("title").notNull().default("New Chat"),
+    visibility: chatVisibility("visibility").notNull().default("private"),
+
+    // AI configuration
+    model: text("model").default("anthropic/claude-3-5-sonnet"),
+
+    // Streaming state (for resumable streams)
+    activeStreamId: text("active_stream_id"),
+  },
+  (table) => [
+    index("idx_chats_user_id").on(table.userId),
+    index("idx_chats_mcp_server_id").on(table.mcpServerId),
+    index("idx_chats_created_at").on(table.createdAt),
+  ]
+);
+
+// Messages table - conversation history
+export const messages = pgTable(
+  "messages",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => chats.id, { onDelete: "cascade" }),
+    role: messageRole("role").notNull(),
+
+    // Message content as JSON array of parts
+    parts: jsonb("parts").$type<unknown>().notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_messages_chat_id").on(table.chatId),
+    index("idx_messages_created_at").on(table.createdAt),
+  ]
+);
+
+// Tool calls - analytics and payment tracking
+export const toolCalls = pgTable(
+  "tool_calls",
+  {
+    id: text("id").primaryKey(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => chats.id, { onDelete: "cascade" }),
+    toolName: text("tool_name").notNull(),
+    toolCallId: text("tool_call_id").notNull(), // From AI SDK
+
+    // Payment details
+    paymentRequired: boolean("payment_required").default(false).notNull(),
+    paymentAmount: text("payment_amount"), // BigInt as string
+    paymentTxHash: text("payment_tx_hash"),
+    paymentStatus: text("payment_status"), // 'pending' | 'completed' | 'failed'
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("idx_tool_calls_chat_id").on(table.chatId),
+    index("idx_tool_calls_created_at").on(table.createdAt),
+  ]
+);
