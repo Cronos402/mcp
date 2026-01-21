@@ -22,7 +22,7 @@
     "@neondatabase/serverless": "^1.0.2",
     "@pinggy/pinggy": "^0.1.4",
     "better-auth": "^1.3.26",
-    "cronos402": "workspace:*",
+    "cronos402": "^0.1.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.1",
     "get-port": "^7.1.0",
